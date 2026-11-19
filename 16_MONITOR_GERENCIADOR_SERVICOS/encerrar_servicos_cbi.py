@@ -31,15 +31,17 @@ if APP_DIR not in sys.path:
     sys.path.insert(0, APP_DIR)
 
 import cbi_services_core as core
+from vistocar_tk_theme import apply_ttk_theme, get_theme
 
 
 class EncerradorServicosApp:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
-        self.root.title("CBI KillSwitch — Encerrador Universal de Serviços e Processos CBI")
+        self.vt = get_theme("cbi")
+        self.root.title("CBI KillSwitch — Encerrador Universal de Serviços e Processos (Grupo VistoCar)")
         self.root.geometry("1160x720")
         self.root.minsize(940, 580)
-        self.root.configure(bg="#F8FAFC")
+        self.root.configure(bg=self.vt["bg"])
 
         self.snapshot: Optional[Dict[str, Any]] = None
         self.checked_items: Set[str] = set()
@@ -56,44 +58,43 @@ class EncerradorServicosApp:
 
     def _setup_styles(self) -> None:
         style = ttk.Style()
-        try:
-            style.theme_use("clam")
-        except Exception:
-            pass
-        style.configure("Kill.Treeview", rowheight=27, font=("Segoe UI", 9), background="#FFFFFF", fieldbackground="#FFFFFF")
-        style.configure("Kill.Treeview.Heading", font=("Segoe UI", 9, "bold"), background="#E2E8F0", foreground="#0F172A")
+        t = apply_ttk_theme(style, "cbi")
+        style.configure("Kill.Treeview", rowheight=27, font=("Segoe UI", 9), background=t["surface"], fieldbackground=t["surface"], foreground=t["text_primary"])
+        style.configure("Kill.Treeview.Heading", font=("Segoe UI", 9, "bold"), background=t["surface_elevated"], foreground=t["text_secondary"])
 
     def _build_ui(self) -> None:
-        # 1. Header de Controle
-        header = tk.Frame(self.root, bg="#18181B", height=66, padx=18, pady=10)
+        t = self.vt
+        # 1. Header de Controle Institucional TEMA_VISTOCAR
+        header = tk.Frame(self.root, bg=t["bg_deep"], height=66, padx=18, pady=10)
         header.pack(fill="x")
         header.pack_propagate(False)
+        tk.Frame(self.root, bg=t["primary"], height=2).pack(fill="x")
 
-        left_h = tk.Frame(header, bg="#18181B")
+        left_h = tk.Frame(header, bg=t["bg_deep"])
         left_h.pack(side="left", fill="y")
         tk.Label(
             left_h,
-            text="ENCERRADOR UNIVERSAL DE SERVIÇOS — ECOSSISTEMA CBI",
-            bg="#18181B",
-            fg="#FEF2F2",
+            text="GRUPO VISTOCAR • CBI — ENCERRADOR UNIVERSAL DE SERVIÇOS",
+            bg=t["bg_deep"],
+            fg=t["text_primary"],
             font=("Segoe UI", 13, "bold"),
         ).pack(anchor="w")
         tk.Label(
             left_h,
             text="Encerre processos individuais, árvores travadas, portas ocupadas ou todo o ecossistema com segurança.",
-            bg="#18181B",
-            fg="#FCA5A5",
-            font=("Segoe UI", 8),
+            bg=t["bg_deep"],
+            fg=t["accent"],
+            font=("Segoe UI", 8, "bold"),
         ).pack(anchor="w")
 
-        right_h = tk.Frame(header, bg="#18181B")
+        right_h = tk.Frame(header, bg=t["bg_deep"])
         right_h.pack(side="right", fill="y")
         tk.Button(
             right_h,
             text="Abrir Monitor de Serviços",
             command=self._open_monitor_app,
-            bg="#0284C7",
-            fg="#FFFFFF",
+            bg=t["primary"],
+            fg=t["text_on_primary"],
             relief="flat",
             padx=11,
             pady=6,
@@ -104,8 +105,8 @@ class EncerradorServicosApp:
             right_h,
             text="Re-escanear Ativos",
             command=self.refresh_async,
-            bg="#3F3F46",
-            fg="#FFFFFF",
+            bg=t["secondary"],
+            fg=t["text_primary"],
             relief="flat",
             padx=11,
             pady=6,
@@ -114,20 +115,21 @@ class EncerradorServicosApp:
         ).pack(side="right", pady=4)
 
         # 2. Painel de Ação Rápida / Emergência
-        panic_bar = tk.Frame(self.root, bg="#FEF2F2", bd=1, relief="solid", padx=16, pady=10)
+        panic_bg = "#1D1114"
+        panic_bar = tk.Frame(self.root, bg=panic_bg, bd=1, relief="solid", highlightbackground=t["primary"], padx=16, pady=10)
         panic_bar.pack(fill="x", padx=16, pady=(12, 6))
 
-        left_p = tk.Frame(panic_bar, bg="#FEF2F2")
+        left_p = tk.Frame(panic_bar, bg=panic_bg)
         left_p.pack(side="left", fill="y")
 
         tk.Button(
             left_p,
             text="ENCERRAR TODOS OS SERVIÇOS CBI",
             command=self._kill_all_clicked,
-            bg="#DC2626",
-            fg="#FFFFFF",
-            activebackground="#991B1B",
-            activeforeground="#FFFFFF",
+            bg=t["primary"],
+            fg=t["text_on_primary"],
+            activebackground=t["primary_hover"],
+            activeforeground=t["text_on_primary"],
             relief="flat",
             padx=16,
             pady=8,
@@ -135,37 +137,41 @@ class EncerradorServicosApp:
             cursor="hand2",
         ).pack(side="left", padx=(0, 14))
 
-        opts_p = tk.Frame(left_p, bg="#FEF2F2")
+        opts_p = tk.Frame(left_p, bg=panic_bg)
         opts_p.pack(side="left")
         tk.Checkbutton(
             opts_p,
             text="Forçar encerramento imediato (SIGKILL / taskkill /F /T)",
             variable=self.force_var,
-            bg="#FEF2F2",
-            activebackground="#FEF2F2",
+            bg=panic_bg,
+            selectcolor=t["bg_deep"],
+            activebackground=panic_bg,
+            activeforeground=t["text_primary"],
             font=("Segoe UI", 8, "bold"),
-            fg="#7F1D1D",
+            fg=t["text_primary"],
         ).pack(anchor="w")
         tk.Checkbutton(
             opts_p,
             text="Incluir 00_CENTRAL_INTEGRADA_CBI (Porta 8700)",
             variable=self.include_central_var,
-            bg="#FEF2F2",
-            activebackground="#FEF2F2",
+            bg=panic_bg,
+            selectcolor=t["bg_deep"],
+            activebackground=panic_bg,
+            activeforeground=t["text_primary"],
             font=("Segoe UI", 8),
-            fg="#7F1D1D",
+            fg=t["text_secondary"],
         ).pack(anchor="w")
 
-        right_p = tk.Frame(panic_bar, bg="#FEF2F2")
+        right_p = tk.Frame(panic_bar, bg=panic_bg)
         right_p.pack(side="right", fill="y")
-        tk.Label(right_p, text="Liberar Porta:", bg="#FEF2F2", fg="#7F1D1D", font=("Segoe UI", 9, "bold")).pack(side="left", padx=(0, 6))
-        tk.Entry(right_p, textvariable=self.port_entry_var, width=8, font=("Segoe UI", 10)).pack(side="left", padx=(0, 6))
+        tk.Label(right_p, text="Liberar Porta:", bg=panic_bg, fg=t["accent"], font=("Segoe UI", 9, "bold")).pack(side="left", padx=(0, 6))
+        tk.Entry(right_p, textvariable=self.port_entry_var, width=8, font=("Segoe UI", 10), bg=t["input_bg"], fg=t["text_primary"], insertbackground=t["accent"], relief="flat").pack(side="left", padx=(0, 6))
         tk.Button(
             right_p,
             text="Matar Porta",
             command=self._kill_port_clicked,
-            bg="#B45309",
-            fg="#FFFFFF",
+            bg=t["warning"],
+            fg=t["bg_deep"],
             relief="flat",
             padx=10,
             pady=6,
@@ -174,18 +180,18 @@ class EncerradorServicosApp:
         ).pack(side="left")
 
         # 3. Barra de Seleção
-        sel_bar = tk.Frame(self.root, bg="#E2E8F0", padx=16, pady=7)
+        sel_bar = tk.Frame(self.root, bg=t["surface_elevated"], padx=16, pady=7)
         sel_bar.pack(fill="x", padx=16, pady=(4, 4))
 
-        self.lbl_summary = tk.Label(sel_bar, text="Escaneando processos ativos...", bg="#E2E8F0", fg="#0F172A", font=("Segoe UI", 9, "bold"))
+        self.lbl_summary = tk.Label(sel_bar, text="Escaneando processos ativos...", bg=t["surface_elevated"], fg=t["text_primary"], font=("Segoe UI", 9, "bold"))
         self.lbl_summary.pack(side="left")
 
         tk.Button(
             sel_bar,
             text="ENCERRAR SELECIONADOS",
             command=self._kill_selected_clicked,
-            bg="#B91C1C",
-            fg="#FFFFFF",
+            bg=t["primary"],
+            fg=t["text_on_primary"],
             relief="flat",
             padx=12,
             pady=4,
@@ -196,8 +202,8 @@ class EncerradorServicosApp:
             sel_bar,
             text="Limpar Seleção",
             command=self._clear_checks,
-            bg="#475569",
-            fg="#FFFFFF",
+            bg=t["secondary"],
+            fg=t["text_primary"],
             relief="flat",
             padx=9,
             pady=4,
@@ -208,8 +214,8 @@ class EncerradorServicosApp:
             sel_bar,
             text="Selecionar Todos Ativos",
             command=self._select_all_active,
-            bg="#1D4ED8",
-            fg="#FFFFFF",
+            bg=t["secondary_hover"],
+            fg=t["text_primary"],
             relief="flat",
             padx=9,
             pady=4,
@@ -221,13 +227,16 @@ class EncerradorServicosApp:
             text="Mostrar também apps parados",
             variable=self.show_stopped_var,
             command=self._render_table,
-            bg="#E2E8F0",
-            activebackground="#E2E8F0",
+            bg=t["surface_elevated"],
+            fg=t["text_secondary"],
+            selectcolor=t["bg_deep"],
+            activebackground=t["surface_elevated"],
+            activeforeground=t["text_primary"],
             font=("Segoe UI", 8),
         ).pack(side="right", padx=12)
 
         # 4. Tabela com Checkboxes (clique na linha/checkbox alterna marcação)
-        paned = tk.PanedWindow(self.root, orient="vertical", sashwidth=6, bg="#CBD5E1")
+        paned = tk.PanedWindow(self.root, orient="vertical", sashwidth=6, bg=t["border"])
         paned.pack(fill="both", expand=True, padx=16, pady=(2, 12))
 
         table_wrap = tk.Frame(paned, bg="#FFFFFF")

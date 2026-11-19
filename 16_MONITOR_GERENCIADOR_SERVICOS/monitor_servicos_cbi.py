@@ -26,15 +26,17 @@ if APP_DIR not in sys.path:
     sys.path.insert(0, APP_DIR)
 
 import cbi_services_core as core
+from vistocar_tk_theme import apply_ttk_theme, get_theme
 
 
 class MonitorServicosApp:
     def __init__(self, root: tk.Tk, auto_interval_sec: int = 3) -> None:
         self.root = root
-        self.root.title("CBI Monitor — Monitoramento de Serviços Ativos (Apps 00 a 15)")
+        self.vt = get_theme("cbi")
+        self.root.title("CBI Monitor — Monitoramento de Serviços Ativos (Grupo VistoCar • Apps 00 a 15)")
         self.root.geometry("1240x760")
         self.root.minsize(1020, 620)
-        self.root.configure(bg="#F1F5F9")
+        self.root.configure(bg=self.vt["bg"])
 
         self.snapshot: Optional[Dict[str, Any]] = None
         self.scanning = False
@@ -53,48 +55,44 @@ class MonitorServicosApp:
 
     def _setup_styles(self) -> None:
         style = ttk.Style()
-        try:
-            style.theme_use("clam")
-        except Exception:
-            pass
-        style.configure("Treeview", rowheight=27, font=("Segoe UI", 9), background="#FFFFFF", fieldbackground="#FFFFFF")
-        style.configure("Treeview.Heading", font=("Segoe UI", 9, "bold"), background="#E2E8F0", foreground="#0F172A")
-        style.map("Treeview", background=[("selected", "#DBEAFE")], foreground=[("selected", "#0F172A")])
+        apply_ttk_theme(style, "cbi")
 
     def _build_ui(self) -> None:
-        # 1. Header escuro institucional
-        header = tk.Frame(self.root, bg="#0B1220", height=64, padx=18, pady=10)
+        t = self.vt
+        # 1. Header institucional TEMA_VISTOCAR (CBI Preto/Grafite + linha carmim/ouro)
+        header = tk.Frame(self.root, bg=t["bg_deep"], height=66, padx=18, pady=10)
         header.pack(fill="x")
         header.pack_propagate(False)
+        tk.Frame(self.root, bg=t["primary"], height=2).pack(fill="x")
 
-        left_h = tk.Frame(header, bg="#0B1220")
+        left_h = tk.Frame(header, bg=t["bg_deep"])
         left_h.pack(side="left", fill="y")
         tk.Label(
             left_h,
-            text="MONITOR DE SERVIÇOS ATIVOS — ECOSSISTEMA CBI",
-            bg="#0B1220",
-            fg="#F8FAFC",
+            text="GRUPO VISTOCAR • CBI — MONITOR DE SERVIÇOS ATIVOS",
+            bg=t["bg_deep"],
+            fg=t["text_primary"],
             font=("Segoe UI", 13, "bold"),
         ).pack(anchor="w")
         self.lbl_root_dir = tk.Label(
             left_h,
             text=f"Raiz detectada: {core.discover_ecosystem_root()}",
-            bg="#0B1220",
-            fg="#94A3B8",
-            font=("Segoe UI", 8),
+            bg=t["bg_deep"],
+            fg=t["accent"],
+            font=("Segoe UI", 8, "bold"),
         )
         self.lbl_root_dir.pack(anchor="w")
 
-        right_h = tk.Frame(header, bg="#0B1220")
+        right_h = tk.Frame(header, bg=t["bg_deep"])
         right_h.pack(side="right", fill="y")
         tk.Button(
             right_h,
             text="Abrir Encerrador de Serviços",
             command=self._open_stopper_app,
-            bg="#DC2626",
-            fg="#FFFFFF",
-            activebackground="#B91C1C",
-            activeforeground="#FFFFFF",
+            bg=t["primary"],
+            fg=t["text_on_primary"],
+            activebackground=t["primary_hover"],
+            activeforeground=t["text_on_primary"],
             relief="flat",
             padx=12,
             pady=6,
@@ -105,10 +103,10 @@ class MonitorServicosApp:
             right_h,
             text="Atualizar Agora",
             command=self.refresh_async,
-            bg="#0EA5E9",
-            fg="#FFFFFF",
-            activebackground="#0284C7",
-            activeforeground="#FFFFFF",
+            bg=t["secondary"],
+            fg=t["text_primary"],
+            activebackground=t["secondary_hover"],
+            activeforeground=t["text_primary"],
             relief="flat",
             padx=12,
             pady=6,
@@ -117,32 +115,32 @@ class MonitorServicosApp:
         ).pack(side="right", pady=4)
 
         # 2. KPI Cards
-        kpi_bar = tk.Frame(self.root, bg="#F1F5F9", padx=16, pady=10)
+        kpi_bar = tk.Frame(self.root, bg=t["bg"], padx=16, pady=10)
         kpi_bar.pack(fill="x")
 
         self.kpi_vars: Dict[str, tk.StringVar] = {}
         kpi_defs = [
-            ("online_web", "Servidores Web Online", "#059669"),
-            ("active_pids", "Processos Ativos (PIDs)", "#0284C7"),
-            ("total_ram", "RAM Total Consumida", "#7C3AED"),
-            ("orphans", "Processos Órfãos/Extras", "#D97706"),
-            ("last_scan", "Última Verificação", "#334155"),
+            ("online_web", "Servidores Web Online", t["success"]),
+            ("active_pids", "Processos Ativos (PIDs)", t["info"]),
+            ("total_ram", "RAM Total Consumida", t["accent"]),
+            ("orphans", "Processos Órfãos/Extras", t["warning"]),
+            ("last_scan", "Última Verificação", t["primary"]),
         ]
         for idx, (key, title, color) in enumerate(kpi_defs):
-            card = tk.Frame(kpi_bar, bg="#FFFFFF", bd=1, relief="solid", highlightbackground="#CBD5E1")
+            card = tk.Frame(kpi_bar, bg=t["surface"], bd=1, relief="solid", highlightbackground=t["border"])
             card.grid(row=0, column=idx, sticky="nsew", padx=4)
             kpi_bar.columnconfigure(idx, weight=1)
             tk.Frame(card, bg=color, height=3).pack(fill="x")
-            tk.Label(card, text=title, bg="#FFFFFF", fg="#64748B", font=("Segoe UI", 8, "bold"), anchor="w", padx=10).pack(fill="x", pady=(6, 0))
+            tk.Label(card, text=title, bg=t["surface"], fg=t["text_secondary"], font=("Segoe UI", 8, "bold"), anchor="w", padx=10).pack(fill="x", pady=(6, 0))
             var = tk.StringVar(value="-")
             self.kpi_vars[key] = var
-            tk.Label(card, textvariable=var, bg="#FFFFFF", fg="#0F172A", font=("Segoe UI", 14, "bold"), anchor="w", padx=10).pack(fill="x", pady=(2, 8))
+            tk.Label(card, textvariable=var, bg=t["surface"], fg=t["text_primary"], font=("Segoe UI", 14, "bold"), anchor="w", padx=10).pack(fill="x", pady=(2, 8))
 
         # 3. Toolbar (Filtros + Busca + Auto-refresh + Ações)
-        toolbar = tk.Frame(self.root, bg="#E2E8F0", padx=16, pady=8)
+        toolbar = tk.Frame(self.root, bg=t["surface_elevated"], padx=16, pady=8)
         toolbar.pack(fill="x")
 
-        tk.Label(toolbar, text="Filtro:", bg="#E2E8F0", fg="#0F172A", font=("Segoe UI", 9, "bold")).pack(side="left")
+        tk.Label(toolbar, text="Filtro:", bg=t["surface_elevated"], fg=t["text_primary"], font=("Segoe UI", 9, "bold")).pack(side="left")
         for label, val in [("Todos", "TODOS"), ("Somente Ativos", "ATIVOS"), ("Inativos / Offline", "INATIVOS")]:
             tk.Radiobutton(
                 toolbar,
@@ -150,31 +148,34 @@ class MonitorServicosApp:
                 variable=self.filter_mode,
                 value=val,
                 command=self._render_table,
-                bg="#E2E8F0",
-                activebackground="#E2E8F0",
+                bg=t["surface_elevated"],
+                fg=t["text_primary"],
+                selectcolor=t["bg_deep"],
+                activebackground=t["surface_elevated"],
+                activeforeground=t["accent"],
                 font=("Segoe UI", 9),
             ).pack(side="left", padx=(4, 6))
 
-        tk.Label(toolbar, text="Buscar:", bg="#E2E8F0", fg="#0F172A", font=("Segoe UI", 9, "bold")).pack(side="left", padx=(12, 4))
-        search_entry = tk.Entry(toolbar, textvariable=self.search_var, width=24, font=("Segoe UI", 9))
+        tk.Label(toolbar, text="Buscar:", bg=t["surface_elevated"], fg=t["text_primary"], font=("Segoe UI", 9, "bold")).pack(side="left", padx=(12, 4))
+        search_entry = tk.Entry(toolbar, textvariable=self.search_var, width=24, font=("Segoe UI", 9), bg=t["input_bg"], fg=t["text_primary"], insertbackground=t["accent"], relief="flat")
         search_entry.pack(side="left", padx=(0, 12))
 
-        tk.Label(toolbar, text="Auto-atualizar:", bg="#E2E8F0", fg="#0F172A", font=("Segoe UI", 9, "bold")).pack(side="left")
+        tk.Label(toolbar, text="Auto-atualizar:", bg=t["surface_elevated"], fg=t["text_primary"], font=("Segoe UI", 9, "bold")).pack(side="left")
         cmb = ttk.Combobox(toolbar, textvariable=self.interval_var, values=["Manual", "2s", "3s", "5s", "10s"], width=8, state="readonly")
         cmb.pack(side="left", padx=(4, 12))
         cmb.bind("<<ComboboxSelected>>", lambda *_: self._schedule_next_refresh())
 
         # Action buttons on the right side of toolbar
-        tk.Button(toolbar, text="Exportar CSV", command=self._export_csv, bg="#475569", fg="#FFFFFF", relief="flat", padx=9, pady=4, font=("Segoe UI", 8, "bold"), cursor="hand2").pack(side="right", padx=3)
-        tk.Button(toolbar, text="Abrir Navegador", command=self._open_selected_browser, bg="#2563EB", fg="#FFFFFF", relief="flat", padx=9, pady=4, font=("Segoe UI", 8, "bold"), cursor="hand2").pack(side="right", padx=3)
-        tk.Button(toolbar, text="Reiniciar", command=self._restart_selected, bg="#D97706", fg="#FFFFFF", relief="flat", padx=9, pady=4, font=("Segoe UI", 8, "bold"), cursor="hand2").pack(side="right", padx=3)
-        tk.Button(toolbar, text="Iniciar Serviço", command=self._start_selected, bg="#059669", fg="#FFFFFF", relief="flat", padx=9, pady=4, font=("Segoe UI", 8, "bold"), cursor="hand2").pack(side="right", padx=3)
+        tk.Button(toolbar, text="Exportar CSV", command=self._export_csv, bg=t["secondary"], fg=t["text_primary"], relief="flat", padx=9, pady=4, font=("Segoe UI", 8, "bold"), cursor="hand2").pack(side="right", padx=3)
+        tk.Button(toolbar, text="Abrir Navegador", command=self._open_selected_browser, bg=t["primary"], fg=t["text_on_primary"], relief="flat", padx=9, pady=4, font=("Segoe UI", 8, "bold"), cursor="hand2").pack(side="right", padx=3)
+        tk.Button(toolbar, text="Reiniciar", command=self._restart_selected, bg=t["warning"], fg=t["bg_deep"], relief="flat", padx=9, pady=4, font=("Segoe UI", 8, "bold"), cursor="hand2").pack(side="right", padx=3)
+        tk.Button(toolbar, text="Iniciar Serviço", command=self._start_selected, bg=t["success"], fg="#FFFFFF", relief="flat", padx=9, pady=4, font=("Segoe UI", 8, "bold"), cursor="hand2").pack(side="right", padx=3)
 
         # 4. PanedWindow (Tabela principal em cima, Inspector/Abas em baixo)
-        paned = tk.PanedWindow(self.root, orient="vertical", sashwidth=6, bg="#CBD5E1")
+        paned = tk.PanedWindow(self.root, orient="vertical", sashwidth=6, bg=t["border"])
         paned.pack(fill="both", expand=True, padx=16, pady=(8, 12))
 
-        table_frame = tk.Frame(paned, bg="#FFFFFF")
+        table_frame = tk.Frame(paned, bg=t["surface"])
         cols = ("code", "name", "status", "port", "http_lat", "pids", "ram", "uptime", "exe")
         self.tree = ttk.Treeview(table_frame, columns=cols, show="headings", selectmode="browse")
         headers = [
@@ -192,11 +193,11 @@ class MonitorServicosApp:
             self.tree.heading(cid, text=text)
             self.tree.column(cid, width=width, anchor=anchor)
 
-        self.tree.tag_configure("ONLINE", background="#ECFDF5", foreground="#065F46")
-        self.tree.tag_configure("ATIVO", background="#EFF6FF", foreground="#1E40AF")
-        self.tree.tag_configure("TRAVADO", background="#FEF3C7", foreground="#92400E")
-        self.tree.tag_configure("OFFLINE", background="#FFFFFF", foreground="#64748B")
-        self.tree.tag_configure("INATIVO", background="#FFFFFF", foreground="#64748B")
+        self.tree.tag_configure("ONLINE", background="#0F261A", foreground="#4ADE80")
+        self.tree.tag_configure("ATIVO", background="#102136", foreground="#7DD3FC")
+        self.tree.tag_configure("TRAVADO", background="#2B1F0B", foreground="#FCD34D")
+        self.tree.tag_configure("OFFLINE", background=t["surface"], foreground=t["text_muted"])
+        self.tree.tag_configure("INATIVO", background=t["surface"], foreground=t["text_muted"])
 
         vsb = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=vsb.set)
