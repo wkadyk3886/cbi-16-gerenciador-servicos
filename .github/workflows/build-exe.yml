@@ -1,0 +1,47 @@
+name: Build Windows Standalone EXE
+
+on:
+  push:
+    branches: [ main, TEMA_VISTOCAR ]
+  workflow_dispatch:
+
+env:
+  PYTHONUTF8: "1"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PyInstaller
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: Build EXEs with PyInstaller (--onefile)
+        working-directory: "16_MONITOR_GERENCIADOR_SERVICOS"
+        shell: pwsh
+        run: |
+          pyinstaller --clean --noconfirm "MonitorServicosCBI.spec"
+          pyinstaller --clean --noconfirm "EncerradorServicosCBI.spec"
+
+      - name: Verify built EXEs
+        working-directory: "16_MONITOR_GERENCIADOR_SERVICOS/dist"
+        shell: pwsh
+        run: |
+          Get-ChildItem -Filter *.exe | ForEach-Object { Write-Output "$($_.Name) : $([math]::Round($_.Length / 1MB, 2)) MB" }
+
+      - name: Upload EXE artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: "GerenciadorServicosCBI-exes"
+          path: "16_MONITOR_GERENCIADOR_SERVICOS/dist/*.exe"
+          if-no-files-found: error
